@@ -7,9 +7,9 @@ source $TOPDIR/config.inc
 source $TOPDIR/function.inc
 _prgname=${0##*/}   # script name minus the path
 
-_package="tcl"
-_version="8.6.8"
-_sourcedir="${_package}${_version}"
+_package="perl"
+_version="5.26.1"
+_sourcedir="${_package}-${_version}"
 _log="$LFS_TOP/$LOGDIR/$_prgname.log"
 _completed="$LFS_TOP/$LOGDIR/$_prgname.completed"
 
@@ -29,30 +29,23 @@ printf "${_green}==>${_normal} Building $_package-$_version: "
 
 # unpack sources
 [ -d $_sourcedir ] && rm -rf $_sourcedir
-unpack "${PWD}" "${_package}${_version}-src"
+unpack "${PWD}" "${_package}-${_version}"
 
 # cd to source dir
 cd $_sourcedir
 
 # prep
-
-build2 "cd unix" $_log
-build2 "./configure --prefix=$TOOLS \
-    --libdir=$TOOLS/lib64" $_log
+build2 "sed -i \"s@/usr/include@$TOOLS/include@g\" ext/Errno/Errno_pm.PL" $_log
+build2 "./configure.gnu \
+    --prefix=$TOOLS \
+    -Dcc=\"gcc ${BUILD32}\"" $_log
 
 # build
 build2 "make $MKFLAGS" $_log
 
-#build2 "TZ=UTC make test" $_log
-
 # install
 build2 "make install" $_log
-
-build2 "chmod -v u+w $TOOLS/lib64/libtcl8.6.so" $_log
-
-build2 "make install-private-headers" $_log
-
-build2 "ln -sfv tclsh8.6 $TOOLS/bin/tclsh" $_log
+build2 "ln -sfv $TOOLS/bin/perl /usr/bin" $_log
 
 # clean up
 cd ..

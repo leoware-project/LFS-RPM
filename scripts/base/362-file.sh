@@ -7,9 +7,9 @@ source $TOPDIR/config.inc
 source $TOPDIR/function.inc
 _prgname=${0##*/}   # script name minus the path
 
-_package="tcl"
-_version="8.6.8"
-_sourcedir="${_package}${_version}"
+_package="file"
+_version="5.32"
+_sourcedir="${_package}-${_version}"
 _log="$LFS_TOP/$LOGDIR/$_prgname.log"
 _completed="$LFS_TOP/$LOGDIR/$_prgname.completed"
 
@@ -28,38 +28,39 @@ printf "${_green}==>${_normal} Building $_package-$_version: "
 } || printf "\n"
 
 # unpack sources
+#[ -d glibc-build ] && build2 "rm -rf glibc-build" $_log
 [ -d $_sourcedir ] && rm -rf $_sourcedir
-unpack "${PWD}" "${_package}${_version}-src"
+unpack "${PWD}" "${_package}-${_version}"
 
 # cd to source dir
 cd $_sourcedir
 
 # prep
 
-build2 "cd unix" $_log
-build2 "./configure --prefix=$TOOLS \
-    --libdir=$TOOLS/lib64" $_log
+#build2 "mkdir -v ../glibc-build" $_log
+#build2 "cd ../glibc-build" $_log
+
+build2 "CC=\"gcc ${BUILD64}\" \
+./configure \
+    --prefix=/usr \
+    --libdir=/usr/lib64" $_log
 
 # build
 build2 "make $MKFLAGS" $_log
 
-#build2 "TZ=UTC make test" $_log
+# test
+build2 "make check" $_log
 
 # install
 build2 "make install" $_log
 
-build2 "chmod -v u+w $TOOLS/lib64/libtcl8.6.so" $_log
-
-build2 "make install-private-headers" $_log
-
-build2 "ln -sfv tclsh8.6 $TOOLS/bin/tclsh" $_log
-
 # clean up
-cd ..
-rm -rf $_sourcedir
+build2 "cd .." $_log
+#build2 "rm -rf glibc-build" $_log
+build2 "rm -rf $_sourcedir" $_log
 
 # make .completed file
-touch $_completed
+build2 "touch $_completed" $_log
 
 # exit sucessfully
 exit 0

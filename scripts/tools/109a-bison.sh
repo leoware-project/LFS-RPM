@@ -1,5 +1,4 @@
 #!/bin/bash
-exit 1
 set -o errexit  # exit if error
 set -o nounset  # exit if variable not initalized
 set +h          # disable hashall
@@ -8,8 +7,8 @@ source $TOPDIR/config.inc
 source $TOPDIR/function.inc
 _prgname=${0##*/}   # script name minus the path
 
-_package="binutils"
-_version="2.30"
+_package="bison"
+_version="3.0.4"
 _sourcedir="${_package}-${_version}"
 _log="$LFS_TOP/$LOGDIR/$_prgname.log"
 _completed="$LFS_TOP/$LOGDIR/$_prgname.completed"
@@ -29,24 +28,16 @@ printf "${_green}==>${_normal} Building $_package-$_version: "
 } || printf "\n"
 
 # unpack sources
-[ -d $_sourcedir ] && rm -rf $_sourcedir
+#[ -d gcc-build ] && build2 "rm -rf gcc-build" $_log
+[ -d $_sourcedir ] && build2 "rm -rf $_sourcedir" $_log
 unpack "${PWD}" "${_package}-${_version}"
 
 # cd to source dir
-cd $_sourcedir
+build2 "cd $_sourcedir" $_log
 
 # prep
-build2 "install -vdm 0755 build" $_log
-build2 "cd build" $_log
-build2 "CC=$LFS_TGT-gcc                \
-AR=$LFS_TGT-ar                 \
-RANLIB=$LFS_TGT-ranlib         \
-../configure                   \
-    --prefix=$TOOLS            \
-    --disable-nls              \
-    --disable-werror           \
-    --with-lib-path=$TOOLS/lib \
-    --with-sysroot=$LFS" $_log
+build2 "M4=/usr/bin/m4 ./configure \
+    --prefix=$TOOLS" $_log
 
 # build
 build2 "make $MKFLAGS" $_log
@@ -54,16 +45,13 @@ build2 "make $MKFLAGS" $_log
 # install
 build2 "make install" $_log
 
-build2 "make -C ld clean" $_log
-build2 "make -C ld LIB_PATH=/usr/lib:/lib" $_log
-build2 "cp -v ld/ld-new $TOOLS/bin" $_log
-
 # clean up
-cd ..
-rm -rf $_sourcedir
+build2 "cd .." $_log
+#build2 "rm -rf gcc-build" $_log
+build2 "rm -rf $_sourcedir" $_log
 
 # make .completed file
-touch $_completed
+build2 "touch $_completed" $_log
 
 # exit sucessfully
 exit 0

@@ -1,5 +1,4 @@
 #!/bin/bash
-exit 1
 set -o errexit  # exit if error
 set -o nounset  # exit if variable not initalized
 set +h          # disable hashall
@@ -8,8 +7,8 @@ source $TOPDIR/config.inc
 source $TOPDIR/function.inc
 _prgname=${0##*/}   # script name minus the path
 
-_package="gcc"
-_version="7.3.0"
+_package="zlib"
+_version="1.2.11"
 _sourcedir="${_package}-${_version}"
 _log="$LFS_TOP/$LOGDIR/$_prgname.log"
 _completed="$LFS_TOP/$LOGDIR/$_prgname.completed"
@@ -21,7 +20,7 @@ _cyan="\\033[1;36m"
 _normal="\\033[0;39m"
 
 
-printf "${_green}==>${_normal} Building libstdc++-$_version: "
+printf "${_green}==>${_normal} Building $_package-$_version: "
 
 [ -e $_completed ] && {
     printf "${_yellow}SKIPPING${_normal}\n"
@@ -29,6 +28,7 @@ printf "${_green}==>${_normal} Building libstdc++-$_version: "
 } || printf "\n"
 
 # unpack sources
+#[ -d glibc-build ] && build2 "rm -rf glibc-build" $_log
 [ -d $_sourcedir ] && rm -rf $_sourcedir
 unpack "${PWD}" "${_package}-${_version}"
 
@@ -36,30 +36,36 @@ unpack "${PWD}" "${_package}-${_version}"
 cd $_sourcedir
 
 # prep
-build2 "install -vdm 0755 build" $_log
-build2 "cd build" $_log
-build2 "../libstdc++-v3/configure           \
-    --host=$LFS_TGT                 \
-    --prefix=$TOOLS                 \
-    --disable-multilib              \
-    --disable-nls                   \
-    --disable-libstdcxx-threads     \
-    --disable-libstdcxx-pch         \
-    --with-gxx-include-dir=$TOOLS/$LFS_TGT/include/c++/7.3.0" $_log
+
+#build2 "mkdir -v ../glibc-build" $_log
+#build2 "cd ../glibc-build" $_log
+
+build2 "CC=\"gcc -isystem /usr/include ${BUILD32}\" \
+CXX=\"g++ -isystem /usr/include ${BUILD32}\" \
+LDFLAGS=\"-Wl,-rpath-link,/usr/lib32:/lib32 ${BUILD32}\" \
+./configure \
+    --prefix=/usr \
+    --libdir=/usr/lib32" $_log
 
 # build
 build2 "make $MKFLAGS" $_log
 
+# test
+build2 "make check" $_log
+
 # install
 build2 "make install" $_log
 
+mv -v /usr/lib32/libz.so.* /lib32
+ln -sfv ../../lib32/$(readlink /usr/lib32/libz.so) /usr/lib32/libz.so
+
 # clean up
-cd ..
-rm -rf $_sourcedir
+build2 "cd .." $_log
+#build2 "rm -rf glibc-build" $_log
+build2 "rm -rf $_sourcedir" $_log
 
 # make .completed file
-touch $_completed
+build2 "touch $_completed" $_log
 
 # exit sucessfully
 exit 0
-a
