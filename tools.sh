@@ -13,19 +13,19 @@ set +h          # disable hashall
 source config.inc
 source function.inc
 PRGNAME=${0##*/}	# script name minus the path
-LOGDIR="$LFS_TOP/$LOGDIR"
+LOGDIR="$HOST_TOP/$LOGDIR"
 #
 #	Main line
 #
 #msg "Building Chapter 5 Tool chain"
 [ "${LFS_USER}" != $(whoami) ] && die "Not lfs user: FAILURE"
 [ -z "${LFS_TARGET}" ]  && die "Environment not set: FAILURE"
-[ "${LFS_TOP}" = $(pwd) ] && build2 "cd ${LFS_TOP}" "${LOGDIR}/toolchain.log"
+[ "${HOST_TOP}" = $(pwd) ] && build2 "cd ${HOST_TOP}" "${LOGDIR}/toolchain.log"
 
 # execute all toolchain scripts
-for script in `find $LFS_TOP/scripts/{chroot,tools} -type f | sort`
+for script in `find $HOST_TOP/scripts/tools -type f | sort`
 do
-    cd $LFS_TOP/$BUILDDIR
+    cd $HOST_TOP/$BUILDDIR
 
     export PATH=$CROSS_TOOLS/bin:/bin:/usr/bin
     export LC_ALL=POSIX
@@ -39,9 +39,28 @@ do
     export STRIP="${LFS_TARGET}-strip"
 
     # execute the file
-    TOPDIR=$LFS_TOP bash $script
-
+    TOPDIR=$HOST_TOP bash $script
 done
-exit 1
+
+# execute all chroot scripts
+for script in `find $HOST_TOP/scripts/chroot -type f | sort`
+do
+    cd $HOST_TOP/$BUILDDIR
+
+    export PATH=$CROSS_TOOLS/bin:/bin:/usr/bin
+    export LC_ALL=POSIX
+
+    export CC="${LFS_TARGET}-gcc ${BUILD64}"
+    export CXX="${LFS_TARGET}-g++ ${BUILD64}"
+    export AR="${LFS_TARGET}-ar"
+    export AS="${LFS_TARGET}-as"
+    export RANLIB="${LFS_TARGET}-ranlib"
+    export LD="${LFS_TARGET}-ld"
+    export STRIP="${LFS_TARGET}-strip"
+
+    # execute the file
+    TOPDIR=$HOST_TOP bash $script
+done
+
 touch "$LOGDIR/tools.completed"
 exit 0

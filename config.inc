@@ -13,7 +13,8 @@ CROSS_TOOLS=/leoware-cross
 # Where the build system is installed
 # This directory is appended to /mnt/leoware
 HOST_TOP="/home/samuel/src/leoware"
-LFS_TOP="/home/samuel/src/leoware"
+#LFS_TOP="/home/samuel/src/leoware"
+LFS_TOP="/leoware"
 # LFS user name
 # System will build with this user
 LFS_USER="samuel"
