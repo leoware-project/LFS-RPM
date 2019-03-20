@@ -1,9 +1,5 @@
-
-/BUILD
-/BUILDROOT
-/LOGS
-/RPMS
-/SOURCES
-/SRPMS
-/mylfs.sublime-project
-/mylfs.sublime-workspace
+/*.log
+/*.sublime-project
+/*.sublime-workspace
+/sources/*
+/logs/*
